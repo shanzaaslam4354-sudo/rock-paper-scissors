@@ -1,2 +1,2 @@
 # rock-paper-scissors
-this is my website;https://github.com/shanzaaslam4354-sudo/rock-paper-scissors
+this is my website;https://shanzaaslam4354-sudo.github.io/rock-paper-scissors/

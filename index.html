@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rock • Paper • Scissors</title>
+  <style>
+    :root{
+      --bg:#0f1220;
+      --card:#161a2b;
+      --accent:#6ee7ff;
+      --win:#22c55e;
+      --lose:#ef4444;
+      --draw:#f59e0b;
+      --text:#e5e7eb;
+      --muted:#a4a9c0;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 70% -10%, #1c2240 0%, #0f1220 60%, #0b0e18 100%);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .app{
+      width:min(900px, 95vw);
+      background:linear-gradient(180deg, #171b2e 0%, #12162a 100%);
+      border:1px solid #202642;
+      border-radius:24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
+      overflow:hidden;
+    }
+    header{
+      padding:28px 24px 10px;
+      display:flex;align-items:end;justify-content:space-between;gap:12px;
+      border-bottom:1px solid #20264266;
+      background:
+        radial-gradient(400px 100px at 10% -20%, rgba(110,231,255,.15), transparent 70%),
+        radial-gradient(300px 120px at 90% -30%, rgba(147,197,253,.10), transparent 70%);
+    }
+    h1{
+      margin:0;
+      font-size:clamp(22px, 3.5vw, 34px);
+      letter-spacing:.5px;
+    }
+    .sub{color:var(--muted); font-size:clamp(12px, 2vw, 14px)}
+    .score{
+      display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+      background: #0f1326;
+      border:1px solid #232a4b;
+      padding:10px 14px;border-radius:16px;
+    }
+    .score span{display:inline-flex;gap:6px;align-items:center}
+    .score b{color:var(--accent); font-weight:700}
+    main{padding:24px; display:grid; gap:22px}
+    .arena{
+      display:grid; gap:16px;
+      grid-template-columns: 1fr 140px 1fr;
+      align-items:center;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid #232a4b;
+      border-radius:20px;
+      padding:18px;
+      min-height:120px;
+      display:grid; place-items:center; gap:10px;
+      text-align:center;
+    }
+    .you .tag, .cpu .tag{
+      font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:var(--muted)
+    }
+    .pick{
+      font-size:48px; line-height:1; filter: drop-shadow(0 2px 0 rgba(0,0,0,.2));
+      min-height: 58px;
+    }
+    .vs{
+      text-align:center; color:var(--muted); font-weight:700;
+    }
+    .controls{
+      display:grid; gap:12px; grid-template-columns: repeat(3, 1fr);
+    }
+    button.choice{
+      background:#11162c; color:var(--text);
+      border:1px solid #232a4b; border-radius:16px; padding:14px 10px;
+      font-size:18px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+    }
+    button.choice:hover{background:#131a36; border-color:#2a3360}
+    button.choice:active{transform:translateY(1px) scale(.99)}
+    .result{
+      text-align:center; font-size:clamp(16px, 4vw, 20px); padding:10px 14px;
+      border-radius:14px; border:1px dashed #2a3360; color:var(--muted);
+      background:#0f1326;
+    }
+    .result.win{color:#d1fae5; border-color:#14532d; background:rgba(34,197,94,.12)}
+    .result.lose{color:#fee2e2; border-color:#7f1d1d; background:rgba(239,68,68,.12)}
+    .result.draw{color:#fff7ed; border-color:#7c2d12; background:rgba(245,158,11,.12)}
+    .bar{
+      height:10px; border-radius:10px; overflow:hidden; background:#0e1328; border:1px solid #232a4b
+    }
+    .bar > i{display:block; height:100%; background: linear-gradient(90deg, #60a5fa, #22d3ee); width:0%}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .left, .right{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .tiny{font-size:12px; color:var(--muted)}
+    .ghost{
+      background:transparent;border:1px dashed #2a3360;color:var(--muted)
+    }
+    .pill{
+      padding:10px 12px; border-radius:999px; border:1px solid #232a4b; background:#0f1326; color:var(--text);
+      font-size:14px;
+    }
+    .hidden{display:none}
+    @media (max-width:700px){
+      .arena{grid-template-columns: 1fr; }
+      .vs{order:-1}
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <div>
+        <h1>Rock • Paper • Scissors</h1>
+        <div class="sub">First to <b id="target">5</b> wins the match</div>
+      </div>
+      <div class="score" aria-live="polite">
+        <span>👤 You: <b id="youScore">0</b></span>
+        <span>🤖 CPU: <b id="cpuScore">0</b></span>
+        <span>🔁 Rounds: <b id="rounds">0</b></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="arena">
+        <div class="card you">
+          <div class="tag">Your Pick</div>
+          <div class="pick" id="youPick">—</div>
+        </div>
+
+        <div class="vs">
+          <div class="pill">VS</div>
+        </div>
+
+        <div class="card cpu">
+          <div class="tag">CPU Pick</div>
+          <div class="pick" id="cpuPick">—</div>
+        </div>
+      </section>
+
+      <section class="controls">
+        <button class="choice" data-move="rock" aria-label="Choose Rock">✊ Rock</button>
+        <button class="choice" data-move="paper" aria-label="Choose Paper">✋ Paper</button>
+        <button class="choice" data-move="scissors" aria-label="Choose Scissors">✌️ Scissors</button>
+      </section>
+
+      <section class="result" id="result" aria-live="polite">Make your move!</section>
+
+      <section class="row">
+        <div class="left" style="flex:1">
+          <div class="bar" aria-label="Progress to match target">
+            <i id="progress"></i>
+          </div>
+          <span class="tiny" id="progressText">0 / 5</span>
+        </div>
+        <div class="right">
+          <label class="pill" for="raceTo">
+            Race to:
+            <select id="raceTo" style="background:transparent;color:var(--text);border:none;outline:none;margin-left:6px">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+              <option value="7">7</option>
+            </select>
+          </label>
+          <button class="pill ghost" id="resetBtn">Reset</button>
+        </div>
+      </section>
+
+      <details class="tiny">
+        <summary>How to play</summary>
+        Rock beats Scissors, Scissors beat Paper, Paper beats Rock.
+        First to the selected target wins the match.
+      </details>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const moves = ["rock","paper","scissors"];
+      const icons = { rock:"✊", paper:"✋", scissors:"✌️" };
+
+      const el = (id) => document.getElementById(id);
+      const youPick = el("youPick");
+      const cpuPick = el("cpuPick");
+      const resBox = el("result");
+      const youScoreEl = el("youScore");
+      const cpuScoreEl = el("cpuScore");
+      const roundsEl = el("rounds");
+      const progressBar = el("progress");
+      const progressText = el("progressText");
+      const raceToSel = el("raceTo");
+      const targetEl = el("target");
+      const resetBtn = el("resetBtn");
+
+      let state = {
+        you:0, cpu:0, rounds:0, target: Number(raceToSel.value), locked:false
+      };
+
+      function cpuMove(){
+        return moves[Math.floor(Math.random() * moves.length)];
+      }
+
+      function decide(a,b){
+        if(a===b) return "draw";
+        if(
+          (a==="rock" && b==="scissors") ||
+          (a==="scissors" && b==="paper") ||
+          (a==="paper" && b==="rock")
+        ) return "win";
+        return "lose";
+      }
+
+      function updateProgress(){
+        const max = state.target;
+        const best = Math.max(state.you, state.cpu);
+        const pct = Math.min(100, (best / max) * 100);
+        progressBar.style.width = pct + "%";
+        progressText.textContent = `${best} / ${max}`;
+      }
+
+      function setResult(status, text){
+        resBox.className = "result " + (status || "");
+        resBox.textContent = text;
+      }
+
+      function renderScore(){
+        youScoreEl.textContent = state.you;
+        cpuScoreEl.textContent = state.cpu;
+        roundsEl.textContent = state.rounds;
+        updateProgress();
+      }
+
+      function announceRound(your, bot, outcome){
+        youPick.textContent = icons[your];
+        cpuPick.textContent = icons[bot];
+        if(outcome==="win") setResult("win", "You win this round! 🎉");
+        else if(outcome==="lose") setResult("lose", "CPU wins this round. 😬");
+        else setResult("draw", "It's a draw. 🤝");
+      }
+
+      function checkMatchEnd(){
+        if(state.you >= state.target || state.cpu >= state.target){
+          state.locked = true;
+          const youWon = state.you > state.cpu;
+          setResult(youWon ? "win" : "lose",
+            youWon ? `You won the match ${state.you}–${state.cpu}! 🏆`
+                   : `CPU won the match ${state.cpu}–${state.you}. Try again!`);
+        }
+      }
+
+      function playRound(yourMove){
+        if(state.locked) return;
+        // tiny input lock to avoid spamming
+        if(resBox.dataset.busy === "1") return;
+        resBox.dataset.busy = "1";
+
+        // small reveal delay for fun
+        youPick.textContent = "…";
+        cpuPick.textContent = "…";
+
+        setTimeout(() => {
+          const botMove = cpuMove();
+          const outcome = decide(yourMove, botMove);
+
+          announceRound(yourMove, botMove, outcome);
+
+          state.rounds++;
+          if(outcome === "win") state.you++;
+          if(outcome === "lose") state.cpu++;
+
+          renderScore();
+          checkMatchEnd();
+          resBox.dataset.busy = "0";
+        }, 180);
+      }
+
+      function reset(all=true){
+        state.you = 0; state.cpu = 0; state.rounds = 0; state.locked = false;
+        if(all){
+          state.target = Number(raceToSel.value);
+          targetEl.textContent = state.target;
+        }
+        youPick.textContent = "—";
+        cpuPick.textContent = "—";
+        setResult("", "Make your move!");
+        renderScore();
+      }
+
+      // Bind UI
+      document.querySelectorAll("button.choice").forEach(btn=>{
+        btn.addEventListener("click", () => playRound(btn.dataset.move));
+      });
+
+      raceToSel.addEventListener("change", () => reset(true));
+      resetBtn.addEventListener("click", () => reset(false));
+
+      // init
+      renderScore();
+    })();
+  </script>
+</body>
+</html>
